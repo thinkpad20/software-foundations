@@ -909,7 +909,7 @@ Proof.
   destruct b.
   rewrite -> and_true_id.
   rewrite -> or_true_true.
-  intros H. rewrite -> H. reflexivity. (*Proves when b is true *)
+  easy.
   rewrite -> and_false_false.
   rewrite -> or_false_id. tauto.
 Qed.
@@ -954,12 +954,13 @@ Inductive bin : Type :=
   | Twice : bin -> bin
   | OneMore : bin -> bin.
 
+(*
 Fixpoint binc (n: bin) : bin :=
   match n with
   | Zero => OneMore Zero
   | Twice n => OneMore (Twice n)
   | OneMore n => 
-  
+  *)
 
 (* FILL IN HERE *)
 (** [] *)
