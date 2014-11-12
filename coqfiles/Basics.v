@@ -880,7 +880,25 @@ Qed.
 (** Prove the following theorem.  (You may want to first prove a
     subsidiary lemma or two.) *)
 
+Theorem and_false_false :
+  forall (b : bool),
+  andb false b = false.
+Proof. intros b. destruct b. reflexivity. simpl. reflexivity. Qed.
 
+Theorem and_true_id :
+  forall (b : bool),
+  andb true b = b.
+Proof. intros b. destruct b. reflexivity. simpl. reflexivity. Qed.
+
+Theorem or_false_id :
+  forall (b : bool),
+  orb false b = b.
+Proof. intros b. destruct b. simpl. reflexivity. simpl. reflexivity. Qed.
+
+Theorem or_true_true :
+  forall (b : bool),
+  orb true b = true.
+Proof. intros b. destruct b. simpl. reflexivity. simpl. reflexivity. Qed.
 
 Theorem andb_eq_orb : 
   forall (b c : bool),
@@ -889,19 +907,12 @@ Theorem andb_eq_orb :
 Proof.
   intros b c.
   destruct b.
-  intros H.
-  destruct c.
-  (* FILL IN HERE *) Admitted.
-
-Theorem and_false_false :
-  forall (b : bool),
-  andb false b = false.
-Proof. intros b. destruct b. reflexivity. simpl. reflexivity. Qed.
-
-Theorem or_false_id :
-  forall (b : bool),
-  orb false b = b.
-Proof. intros b. destruct b. simpl. reflexivity. simpl. reflexivity. Qed.
+  rewrite -> and_true_id.
+  rewrite -> or_true_true.
+  intros H. rewrite -> H. reflexivity. (*Proves when b is true *)
+  rewrite -> and_false_false.
+  rewrite -> or_false_id. tauto.
+Qed.
 
 (** **** Exercise: 3 stars (binary) *)
 (** Consider a different, more efficient representation of natural
@@ -937,6 +948,18 @@ Proof. intros b. destruct b. simpl. reflexivity. simpl. reflexivity. Qed.
         then converting it to unary should yield the same result as first
         converting it to unary and then incrementing. 
 *)
+
+Inductive bin : Type :=
+  | Zero : bin
+  | Twice : bin -> bin
+  | OneMore : bin -> bin.
+
+Fixpoint binc (n: bin) : bin :=
+  match n with
+  | Zero => OneMore Zero
+  | Twice n => OneMore (Twice n)
+  | OneMore n => 
+  
 
 (* FILL IN HERE *)
 (** [] *)
