@@ -599,7 +599,7 @@ Example test_blt_nat3:             (blt_nat 4 2) = false.
     just by observing that [0 + n] reduces to [n] no matter what
     [n] is, a fact that can be read directly off the definition of [plus].*)
 
-Theorem plus_O_n : forall n : nat, 0 + n = n.
+Theorem plus_0_n : forall n : nat, 0 + n = n.
 Proof.
   intros n. simpl. reflexivity.  Qed.
 
@@ -909,7 +909,7 @@ Proof.
   destruct b.
   rewrite -> and_true_id.
   rewrite -> or_true_true.
-  easy.
+  symmetry. assumption.
   rewrite -> and_false_false.
   rewrite -> or_false_id. tauto.
 Qed.
