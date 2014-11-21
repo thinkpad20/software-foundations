@@ -416,14 +416,37 @@ Qed.
     in the proof of this one.)  You may find that [plus_swap] comes in
     handy. *)
 
-Theorem mult_comm : forall m n : nat,
- m * n = n * m.
+(* A stupid lemma needed for proving commutivity of multiplication *)
+Lemma mult_plus1 : forall m k : nat,
+  m * k + m = m * S k.
 Proof.
-  intros m n.
-  induction m as [|m'].
-  Case "m is 0". simpl. rewrite -> mult_0_r. reflexivity.
-  Case "m is S m'". simpl. rewrite -> IHm'. 
-(* FILL IN HERE *) Admitted.
+  intros m k. induction m as [|p].
+  Case "m is 0". reflexivity.
+  Case "m is S p".
+    assert (H1: S p * S k = S k + (p * S k)).  reflexivity.
+    rewrite -> H1.
+    assert (H2: S p * k = k + p * k). reflexivity.
+    rewrite -> H2.
+    rewrite <- IHp.
+    rewrite -> plus_swap.
+    assert (rw1: S k + p = k + S p). rewrite <- plus_n_Sm. reflexivity.
+    rewrite -> rw1.
+    rewrite -> plus_assoc.
+    assert (rw2: k + p * k = p * k + k). apply plus_comm.
+    rewrite -> rw2.
+    reflexivity.
+Qed.
+
+Theorem mult_comm : forall n m : nat,
+  n * m = m * n.
+Proof.
+  intros n m.
+  induction n as [|k].
+  Case "n is 0". simpl. rewrite -> mult_0_r. reflexivity.
+  Case "n is S k". simpl. rewrite -> IHk.
+  rewrite -> plus_comm. apply mult_plus1.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (evenb_n__oddb_Sn) *)
