@@ -103,14 +103,14 @@ Proof.
 Theorem snd_fst_is_swap : forall (p : natprod),
   (snd p, fst p) = swap_pair p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros p. destruct p as [n m]. simpl. reflexivity. Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, optional (fst_swap_is_snd) *)
 Theorem fst_swap_is_snd : forall (p : natprod),
   fst (swap_pair p) = snd p.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros p. destruct p as [n m]. simpl. reflexivity. Qed.
 (** [] *)
 
 (* ###################################################### *)
@@ -212,6 +212,11 @@ Proof. reflexivity.  Qed.
 Example test_app3:             [1;2;3] ++ nil = [1;2;3].
 Proof. reflexivity.  Qed.
 
+Theorem cons_swap : forall l1 l2 : natlist, forall n : nat,
+  (n :: l1) ++ l2 = n :: (l1 ++ l2).
+Proof.
+  intros. reflexivity. Qed.
+
 (** Here are two smaller examples of programming with lists.
     The [hd] function returns the first element (the "head") of the
     list, while [tl] returns everything but the first
@@ -243,27 +248,35 @@ Proof. reflexivity.  Qed.
     [countoddmembers] below. Have a look at the tests to understand
     what these functions should do. *)
 
-Fixpoint nonzeros (l:natlist) : natlist :=
-  (* FILL IN HERE *) admit.
+Fixpoint filter_natlist (f:nat -> bool) (l:natlist) : natlist :=
+  match l with
+  | [] => []
+  | (n::l') => (if f n then [n] else []) ++ filter_natlist f l'
+  end.
+
+Definition neqb (n:nat) (m: nat): bool := negb (beq_nat n m).
+
+Definition nonzeros : natlist -> natlist := filter_natlist (neqb 0).
 
 Example test_nonzeros:            nonzeros [0;1;0;2;3;0;0] = [1;2;3].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
-Fixpoint oddmembers (l:natlist) : natlist :=
-  (* FILL IN HERE *) admit.
+Definition oddmembers : natlist -> natlist := filter_natlist oddb.
 
 Example test_oddmembers:            oddmembers [0;1;0;2;3;0;0] = [1;3].
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
 
-Fixpoint countoddmembers (l:natlist) : nat :=
-  (* FILL IN HERE *) admit.
+Definition countoddmembers (l:natlist) : nat := length (oddmembers l).
 
 Example test_countoddmembers1:    countoddmembers [1;0;3;1;4;5] = 4.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 Example test_countoddmembers2:    countoddmembers [0;2;4] = 0.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 Example test_countoddmembers3:    countoddmembers nil = 0.
- (* FILL IN HERE *) Admitted.
+Proof. reflexivity. Qed.
+
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (alternate) *)
@@ -480,7 +493,7 @@ Proof.
     eventually reaching [nil], these two things together establish the
     truth of [P] for all lists [l].  Here's a concrete example: *)
 
-Theorem app_ass : forall l1 l2 l3 : natlist, 
+Theorem app_assoc : forall l1 l2 l3 : natlist, 
   (l1 ++ l2) ++ l3 = l1 ++ (l2 ++ l3).   
 Proof.
   intros l1 l2 l3. induction l1 as [| n l1'].
@@ -539,6 +552,14 @@ Fixpoint snoc (l:natlist) (v:nat) : natlist :=
   | h :: t => h :: (snoc t v)
   end.
 
+Theorem snoc_is_append_one : forall l : natlist, forall n : nat,
+  snoc l n = l ++ [n].
+Proof.
+  intros l n. induction l as [|h t].
+  reflexivity.
+  simpl. rewrite -> IHt. reflexivity.
+Qed.
+
 (** ... and use it to define a list-reversing function [rev]
     like this: *)
 
@@ -552,6 +573,46 @@ Example test_rev1:            rev [1;2;3] = [3;2;1].
 Proof. reflexivity.  Qed.
 Example test_rev2:            rev nil = nil.
 Proof. reflexivity.  Qed.
+
+
+
+Fixpoint last (def : nat) (l : natlist) : nat :=
+  match l with
+  | [] => def
+  | [n] => n
+  | (_::l') => last def l'
+  end.
+
+(* Lemma last_ignores_first : forall l *)
+
+Lemma last_ignores_first: forall l: natlist, forall def n:nat,
+  length l > 0 -> 
+  last def (n :: l) = last def l.
+Proof.
+  intros [|x l] def n H. inversion H.
+  reflexivity.
+Qed.
+
+Lemma last_only_cares_about_last : forall l: natlist, forall n def:nat,
+  last def (l ++ [n]) = n.
+Proof.
+  intros l n def.
+  assert (nonempty : length (l ++ [n]) > 0).
+    destruct l as [|x l]. simpl. 
+  reflexivity. (* proves base case *)
+  rewrite -> cons_swap.
+    
+    
+  
+  
+Theorem rev_last_is_first : forall l : natlist, forall def : nat,
+  hd def l = last def (rev l).
+Proof.
+  intros l. induction l as [|frst rest].
+  simpl. reflexivity.
+  destruct rest as [|h t].
+  reflexivity.
+  
 
 (** Now let's prove some more list theorems using our newly
     defined [snoc] and [rev].  For something a little more challenging

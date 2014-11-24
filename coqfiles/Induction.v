@@ -456,7 +456,12 @@ Qed.
 Theorem evenb_n__oddb_Sn : forall n : nat,
   evenb n = negb (evenb (S n)).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n as [|k].
+  reflexivity.
+  assert (H: evenb k = evenb (S (S k))). simpl. reflexivity.
+  rewrite <- H. rewrite -> IHk. rewrite -> negb_involutive. reflexivity.
+Qed.
+
 (** [] *)
 
 (* ###################################################################### *)
@@ -472,14 +477,18 @@ Proof.
     reflect before hacking!) *)
 
 Theorem ble_nat_refl : forall n:nat,
-  true = ble_nat n n.
+  ble_nat n n = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n as [|n'].
+  reflexivity.
+  simpl. assumption.
+Qed.
 
 Theorem zero_nbeq_S : forall n:nat,
   beq_nat 0 (S n) = false.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. reflexivity.
+Qed.
 
 Theorem andb_false_r : forall b : bool,
   andb b false = false.
@@ -548,7 +557,10 @@ Proof.
 Theorem plus_swap' : forall n m p : nat, 
   n + (m + p) = m + (n + p).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m p. rewrite <- plus_comm.
+  rewrite <- plus_assoc. replace (n + p) with (p + n). reflexivity.
+  apply plus_comm.
+Qed.
 (** [] *)
 
 
