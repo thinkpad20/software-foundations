@@ -583,8 +583,6 @@ Fixpoint last (def : nat) (l : natlist) : nat :=
   | (_::l') => last def l'
   end.
 
-(* Lemma last_ignores_first : forall l *)
-
 Lemma last_ignores_first: forall l: natlist, forall def n:nat,
   length l > 0 -> 
   last def (n :: l) = last def l.
@@ -593,26 +591,52 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma gt_zero : forall n:nat,
+  S n > 0.
+Proof.
+  intros n. induction n.
+  auto.
+  unfold gt in IHn. unfold lt in IHn.
+  unfold gt. unfold lt.
+  apply le_S.
+  assumption.
+Qed.
+
+Lemma last_from_second : forall l1 l2:natlist, forall def:nat,
+  length l2 > 0 ->
+  last def (l1 ++ l2) = last def l2.
+Proof.
+  intros.
+  induction l1 as [|h t].
+  reflexivity.
+  rewrite -> cons_swap.
+  rewrite -> last_ignores_first.
+  apply IHt.
+  rewrite -> app_length.
+  destruct (length t) as [|len].
+  simpl. apply H.
+  simpl. apply gt_zero.
+Qed.
+
 Lemma last_only_cares_about_last : forall l: natlist, forall n def:nat,
   last def (l ++ [n]) = n.
 Proof.
   intros l n def.
-  assert (nonempty : length (l ++ [n]) > 0).
-    destruct l as [|x l]. simpl. 
-  reflexivity. (* proves base case *)
-  rewrite -> cons_swap.
-    
-    
-  
+  apply last_from_second.
+  simpl. auto.
+Qed.
   
 Theorem rev_last_is_first : forall l : natlist, forall def : nat,
   hd def l = last def (rev l).
 Proof.
-  intros l. induction l as [|frst rest].
+  intros l def. induction l as [|frst rest].
   simpl. reflexivity.
-  destruct rest as [|h t].
+  replace (rev (frst::rest)) with (rev rest ++ [frst]).
+  rewrite -> last_only_cares_about_last.
+  simpl. reflexivity.
+  simpl. rewrite -> snoc_is_append_one.
   reflexivity.
-  
+Qed.  
 
 (** Now let's prove some more list theorems using our newly
     defined [snoc] and [rev].  For something a little more challenging
