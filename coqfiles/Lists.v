@@ -322,7 +322,10 @@ Definition bag := natlist.
     [count], [sum], [add], and [member] for bags. *)
 
 Fixpoint count (v:nat) (s:bag) : nat := 
-  (* FILL IN HERE *) admit.
+  match s with
+  | [] => 0
+  | (n::s') => (if beq_nat v n then 1 else 0) + count v s'
+  end.
 
 (** All these proofs can be done just by [reflexivity]. *)
 
@@ -552,6 +555,7 @@ Fixpoint snoc (l:natlist) (v:nat) : natlist :=
   | h :: t => h :: (snoc t v)
   end.
 
+(* this is equivalent to writing it another way... *)
 Theorem snoc_is_append_one : forall l : natlist, forall n : nat,
   snoc l n = l ++ [n].
 Proof.
@@ -559,9 +563,6 @@ Proof.
   reflexivity.
   simpl. rewrite -> IHt. reflexivity.
 Qed.
-
-(** ... and use it to define a list-reversing function [rev]
-    like this: *)
 
 Fixpoint rev (l:natlist) : natlist := 
   match l with
@@ -591,6 +592,7 @@ Proof.
   reflexivity.
 Qed.
 
+(* I'm sure this is about the least elegant way to prove this. *)
 Lemma gt_zero : forall n:nat,
   S n > 0.
 Proof.
@@ -602,6 +604,8 @@ Proof.
   assumption.
 Qed.
 
+(* Proves that the last element will always come from the second list
+   in an appending, if that list is not empty. *)
 Lemma last_from_second : forall l1 l2:natlist, forall def:nat,
   length l2 > 0 ->
   last def (l1 ++ l2) = last def l2.
@@ -618,6 +622,8 @@ Proof.
   simpl. apply gt_zero.
 Qed.
 
+(* Obvious lemma, says that if we add a singleton list to another list,
+   calling last on the result will be whatever's in the singleton. *)
 Lemma last_only_cares_about_last : forall l: natlist, forall n def:nat,
   last def (l ++ [n]) = n.
 Proof.
@@ -626,6 +632,8 @@ Proof.
   simpl. auto.
 Qed.
   
+(* And this is what we've been leading up to! It says that the first element
+   of a list is the last element of the reversal of that list. Wow! :| *)
 Theorem rev_last_is_first : forall l : natlist, forall def : nat,
   hd def l = last def (rev l).
 Proof.
@@ -779,7 +787,7 @@ Proof.
     involving [foo].  For example, try uncommenting the following to
     see a list of theorems that we have proved about [rev]: *)
 
-(*  SearchAbout rev. *)
+SearchAbout rev.
 
 (** Keep [SearchAbout] in mind as you do the following exercises and
     throughout the rest of the course; it can save you a lot of time! *)
@@ -795,12 +803,17 @@ Proof.
 Theorem app_nil_end : forall l : natlist, 
   l ++ [] = l.   
 Proof.
-  (* FILL IN HERE *) Admitted.
-
+  intros. induction l as [|h t].
+  reflexivity.
+  simpl. rewrite -> IHt. reflexivity.
+Qed.
 
 Theorem rev_involutive : forall l : natlist,
   rev (rev l) = l.
 Proof.
+  intros. induction l as [|h l'].
+  reflexivity.
+  simpl. rewrite <- IHl'.
   (* FILL IN HERE *) Admitted.
 
 (** There is a short solution to the next exercise.  If you find
@@ -810,18 +823,28 @@ Proof.
 Theorem app_ass4 : forall l1 l2 l3 l4 : natlist,
   l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  rewrite -> app_assoc. rewrite -> app_assoc. reflexivity.
+Qed.
 
 Theorem snoc_append : forall (l:natlist) (n:nat),
   snoc l n = l ++ [n].
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction l as [|h l'].
+  simpl. reflexivity.
+  simpl. rewrite -> IHl'. reflexivity.
+Qed.
 
 
 Theorem distr_rev : forall l1 l2 : natlist,
-  rev (l1 ++ l2) = (rev l2) ++ (rev l1).
+  rev (l1 ++ l2) = rev l2 ++ rev l1.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros l1 l2.  
+  induction l1 as [|h l1'].
+  simpl. rewrite -> app_nil_end. reflexivity.
+  simpl. rewrite -> snoc_append. rewrite -> snoc_append. 
+  rewrite -> IHl1'. rewrite -> app_assoc. reflexivity.
+Qed.  
 
 (** An exercise about your implementation of [nonzeros]: *)
 
