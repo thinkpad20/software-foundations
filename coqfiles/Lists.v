@@ -646,6 +646,95 @@ Proof.
   reflexivity.
 Qed.  
 
+Fixpoint nl_index (def i: nat) (l: natlist): nat :=
+  match i, l with
+  | _, [] => def
+  | 0, (n::_) => n
+  | S i', (_::ns) => nl_index def i' ns
+  end.
+
+Theorem index_0: forall l: natlist, forall def: nat,
+  nl_index def 0 l = hd def l.
+Proof.
+  intros.
+  induction l as [|x l'].
+  reflexivity.
+  reflexivity.
+Qed.
+
+Theorem minus_0: forall n: nat, n - 0 = n.
+Proof.
+  intros. induction n as [|n'].
+  reflexivity. reflexivity. 
+Qed.
+
+SearchAbout length.
+
+Theorem len_ignores_elems : forall n m: nat, forall l: natlist,
+  length (n::l) = length (m::l).
+Proof.
+  intros. simpl. reflexivity.
+Qed.
+
+Theorem len_minus_1: forall l: natlist, forall n: nat,
+  length l = length (n::l) - 1.
+Proof.
+  intros. induction l as [|x l'].
+  reflexivity.
+  simpl. reflexivity.
+Qed.
+
+SearchAbout length.
+
+Theorem plus_1: forall n: nat,
+  S n = n + 1.
+Proof.  intros. induction n as [|n']. 
+  reflexivity. simpl. rewrite -> IHn'. reflexivity.
+Qed.
+
+Theorem len_plus_1: forall l: natlist, forall n: nat,
+  length (n :: l) = length l + 1.
+Proof.
+  intros. induction l as [|x l'].
+  simpl. reflexivity.
+  simpl. rewrite <- plus_1. reflexivity.
+Qed.
+
+(* States that the last element of a list is the element at an index
+   n, where n is one less than the length of the list. *)
+Theorem index_end: forall l: natlist, forall def: nat,
+  nl_index def (length l - 1) l = last def l.
+Proof.
+  intros.
+  induction l as [|x l'].
+  reflexivity.
+  rewrite <- len_minus_1.
+  destruct l' as [|x' l''].
+  simpl. reflexivity.
+  simpl. rewrite <- len_minus_1 in IHl'. rewrite -> IHl'.
+  simpl. reflexivity.
+Qed.
+
+Theorem index_empty: forall def i: nat,
+  nl_index def i [] = def.
+Proof.
+  intros. destruct i. reflexivity. reflexivity.
+Qed.
+
+SearchAbout length.
+
+Theorem index_of_snoc: forall def x: nat, forall l: natlist,
+  nl_index def (length l) (snoc l x) = x.
+Proof.
+  intros. induction l as [|h l'].
+  Case "l is empty".
+    simpl. reflexivity.
+  Case "l is non-empty".
+    simpl. assumption.
+Qed.
+
+
+
 (** Now let's prove some more list theorems using our newly
     defined [snoc] and [rev].  For something a little more challenging
     than the inductive proofs we've seen so far, let's prove that
@@ -748,6 +837,8 @@ Proof.
           S (length (rev l')) = S (length l').
         This is immediate from the induction hypothesis. [] *)
 
+
+
 (** Obviously, the style of these proofs is rather longwinded
     and pedantic.  After the first few, we might find it easier to
     follow proofs that give fewer details (since we can easily work
@@ -770,6 +861,31 @@ Proof.
     proof at hand is to ones that the audience will already be
     familiar with.  The more pedantic style is a good default for
     present purposes. *)
+
+Lemma index_of_empty : forall i def : nat,
+  nl_index def i [] = def.
+Proof.
+  intros. destruct i as [|i']. reflexivity. simpl. reflexivity.
+Qed.
+
+(* States that when you reverse a list, the ith element of the original list
+   is the (n - i - 1)th element of the new list, where n is the length of the
+   list. *)
+Theorem rev_indices : forall i def : nat, forall l : natlist,
+  nl_index def i l = nl_index def (length l - S i) (rev l).
+Proof.
+  intros. induction l as [|x l'].
+  Case "l is an empty list".
+  simpl. rewrite -> index_empty. reflexivity.
+  Case "l is a non-empty list".
+  induction i as [|j].
+    SCase "i is 0".
+      simpl. rewrite -> minus_0. replace (length l') with (length (rev l')). 
+      rewrite -> index_of_snoc. reflexivity.
+      apply rev_length.
+    SCase "i is S j".
+      simpl. simpl in IHj.
+Admitted.
 
 (* ###################################################### *)
 (** ** [SearchAbout] *)
@@ -808,23 +924,29 @@ Proof.
   simpl. rewrite -> IHt. reflexivity.
 Qed.
 
+Lemma rev_snoc : forall l : natlist, forall x : nat,
+  rev (snoc l x) = x :: rev l.
+Proof.
+  intros. induction l as [|y l']. reflexivity.
+  simpl. rewrite -> IHl'. simpl. reflexivity.
+Qed.
+
 Theorem rev_involutive : forall l : natlist,
   rev (rev l) = l.
 Proof.
   intros. induction l as [|h l'].
   reflexivity.
-  simpl. rewrite <- IHl'.
-  (* FILL IN HERE *) Admitted.
+  simpl. rewrite -> rev_snoc. rewrite -> IHl'. reflexivity.
+Qed. 
 
 (** There is a short solution to the next exercise.  If you find
     yourself getting tangled up, step back and try to look for a
     simpler way. *)
 
-Theorem app_ass4 : forall l1 l2 l3 l4 : natlist,
+Theorem app_assoc4 : forall l1 l2 l3 l4 : natlist,
   l1 ++ (l2 ++ (l3 ++ l4)) = ((l1 ++ l2) ++ l3) ++ l4.
 Proof.
-  intros.
-  rewrite -> app_assoc. rewrite -> app_assoc. reflexivity.
+  intros. rewrite -> app_assoc. rewrite -> app_assoc. reflexivity.
 Qed.
 
 Theorem snoc_append : forall (l:natlist) (n:nat),
