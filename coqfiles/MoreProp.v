@@ -89,14 +89,15 @@ Inductive next_even (n:nat) : nat -> Prop :=
 (** Define an inductive binary relation [total_relation] that holds
     between every pair of natural numbers. *)
 
-(* FILL IN HERE *)
+Inductive total_relation: nat -> nat -> Prop :=
+  | is_total: forall n m: nat, total_relation n m.
 (** [] *)
 
 (** **** Exercise: 2 stars (empty_relation) *)
 (** Define an inductive binary relation [empty_relation] (on numbers)
     that never holds. *)
 
-(* FILL IN HERE *)
+Inductive empty_relation: nat -> nat -> Prop := .
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (le_exercises) *)
@@ -104,62 +105,98 @@ Inductive next_even (n:nat) : nat -> Prop :=
     we are going to need later in the course.  The proofs make good
     practice exercises. *)
 
-Lemma le_trans : forall m n o, m <= n -> n <= o -> m <= o.
+Definition relation (T: Type): Type := T -> T -> Prop.
+
+Definition transitive {T: Type} (R: relation T): Prop :=
+  forall a b c: T, R a b -> R b c -> R a c.
+
+Lemma le_trans : transitive le.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m o Hnm Hmo. induction Hmo as [m'|o' le']. 
+  Case "le_n". apply Hnm.
+  Case "le_S". apply le_S. apply IHle'.
+Qed.
 
-Theorem O_le_n : forall n,
-  0 <= n.
+Lemma n_le_Sn: forall n, n <= S n.
+Proof. intros. apply le_S. apply le_n. Qed.
+
+Theorem zero_le_n : forall n, 0 <= n.
+Proof. intros. induction n. apply le_n. apply le_S. apply IHn. Qed.
+
+Lemma Sn_le_m_n_le_m: forall n m, S n <= m -> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. 
+  induction H.
+  Case "m is n". apply n_le_Sn.
+  Case "m > n". apply (le_S n m IHle).
+Qed.
 
-Theorem n_le_m__Sn_le_Sm : forall n m,
-  n <= m -> S n <= S m.
+Theorem n_le_m__Sn_le_Sm : forall n m, n <= m -> S n <= S m.
+Proof. intros. induction H. apply le_n. apply le_S in IHle. apply IHle. Qed.
+
+
+Theorem Sn_le_Sm__n_le_m : forall n m, S n <= S m -> n <= m.
+Proof.
+  intros. inversion H. apply le_n. apply Sn_le_m_n_le_m in H1. apply H1.
+Qed.
+
+Theorem le_plus_l : forall a b, a <= a + b.
 Proof. 
-  (* FILL IN HERE *) Admitted.
-
-
-Theorem Sn_le_Sm__n_le_m : forall n m,
-  S n <= S m -> n <= m.
-Proof. 
-  (* FILL IN HERE *) Admitted.
-
-
-Theorem le_plus_l : forall a b,
-  a <= a + b.
-Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros. induction b. rewrite -> plus_0_r. apply le_n.
+  rewrite <- plus_n_Sm. apply le_S. apply IHb.
+Qed.
 
 Theorem plus_lt : forall n1 n2 m,
   n1 + n2 < m ->
   n1 < m /\ n2 < m.
 Proof. 
- unfold lt. 
- (* FILL IN HERE *) Admitted.
+  unfold lt.
+  intros.
+  split. 
+  Case "proving n1 < m".
+    induction n2. rewrite plus_0_r in H. apply H. 
+    rewrite <- plus_n_Sm in H. apply IHn2. apply Sn_le_m_n_le_m in H. apply H.
+  Case "proving n2 < m".  
+    induction n1. simpl in H. apply H.
+    simpl in H. apply IHn1. apply Sn_le_m_n_le_m in H. apply H.
+Qed.
 
-Theorem lt_S : forall n m,
-  n < m ->
-  n < S m.
+Theorem lt_S : forall n m, n < m -> n < S m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold lt. unfold lt in H. apply (le_S (S n) m H).
+Qed.
 
-Theorem ble_nat_true : forall n m,
-  ble_nat n m = true -> n <= m.
+Theorem ble_nat_true : forall n m, ble_nat n m = true -> n <= m.
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n. 
+  intros. apply zero_le_n.
+  intros. induction m. inversion H. simpl in H. apply IHn in H.
+  apply n_le_m__Sn_le_Sm. apply H.
+Qed.
 
-Theorem le_ble_nat : forall n m,
-  n <= m ->
-  ble_nat n m = true.
+SearchAbout ble_nat.
+
+Lemma ble_nat_n_m_n_Sm: forall n m, ble_nat n m = true -> ble_nat n (S m) = true.
 Proof.
-  (* Hint: This may be easiest to prove by induction on [m]. *)
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  intros. reflexivity. intros. simpl. induction m. simpl in H. inversion H.
+  simpl in H. apply IHn in H. apply H.
+Qed.
+
+Theorem le_ble_nat : forall n m, n <= m -> ble_nat n m = true.
+Proof.
+  intros. generalize dependent n. induction m.
+  intros. inversion H. reflexivity.
+  intros. inversion H. simpl. apply ble_nat_refl.
+  apply IHm in H1. apply ble_nat_n_m_n_Sm in H1. apply H1.
+Qed.
 
 Theorem ble_nat_true_trans : forall n m o,
-  ble_nat n m = true -> ble_nat m o = true -> ble_nat n o = true.                               
+  ble_nat n m = true -> ble_nat m o = true -> ble_nat n o = true.         
 Proof.
-  (* Hint: This theorem can be easily proved without using [induction]. *)
-  (* FILL IN HERE *) Admitted.
+  intros. apply le_ble_nat. apply ble_nat_true in H. apply ble_nat_true in H0.
+  apply (le_trans n m o H H0).
+Qed.
 
 
 (** **** Exercise: 3 stars (R_provability) *)
@@ -335,8 +372,8 @@ Definition natural_number_induction_valid : Prop :=
     that [P n] is equivalent to [Podd n] when [n] is odd, and
     equivalent to [Peven n] otherwise. *)
 
-Definition combine_odd_even (Podd Peven : nat -> Prop) : nat -> Prop :=
-  (* FILL IN HERE *) admit.
+Definition combine_odd_even (Podd Peven : nat -> Prop) (n: nat): Prop :=
+  if oddb n then Podd n else Peven n.
 
 (** To test your definition, see whether you can prove the following
     facts: *)
@@ -347,7 +384,9 @@ Theorem combine_odd_even_intro :
     (oddb n = false -> Peven n) ->
     combine_odd_even Podd Peven n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold combine_odd_even. destruct (oddb n). apply H. reflexivity.
+  apply H0. reflexivity.
+Qed.
 
 Theorem combine_odd_even_elim_odd :
   forall (Podd Peven : nat -> Prop) (n : nat),
@@ -355,7 +394,8 @@ Theorem combine_odd_even_elim_odd :
     oddb n = true ->
     Podd n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold combine_odd_even in H. destruct (oddb n). apply H. inversion H0.
+Qed.
 
 Theorem combine_odd_even_elim_even :
   forall (Podd Peven : nat -> Prop) (n : nat),
@@ -363,7 +403,8 @@ Theorem combine_odd_even_elim_even :
     oddb n = false ->
     Peven n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold combine_odd_even in H. destruct (oddb n). inversion H0. apply H.
+Qed.
 
 (** [] *)
 

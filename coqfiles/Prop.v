@@ -315,7 +315,9 @@ Inductive ev : nat -> Prop :=
 Theorem double_even : forall n,
   ev (double n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. rewrite -> double_plus. induction n. apply ev_0.
+  simpl. rewrite <- plus_n_Sm. apply (ev_SS (n+n) IHn).
+Qed.
 (** [] *)
 
 
@@ -365,6 +367,11 @@ Proof.
     unfold even. apply IHE'.  
 Qed.
 
+Theorem even_ev: forall n, even n -> ev n.
+Proof. Admitted.
+(*  intros. unfold even in H. unfold evenb in H. induction n. apply ev_0.
+  unfold even in H. inversion H. simpl in H1. *)
+
 (** Could this proof also be carried out by induction on [n] instead
     of [E]?  If not, why not? *)
 
@@ -401,7 +408,9 @@ Qed.
 Theorem ev_sum : forall n m,
    ev n -> ev m -> ev (n+m).
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros. induction H. simpl. apply H0.
+  simpl. apply (ev_SS (n+m) IHev).
+Qed.
 (** [] *)
 
 
@@ -471,10 +480,10 @@ Proof.
 
 
 (** **** Exercise: 1 star (inversion_practice) *)
+
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
-Proof.
-  (* FILL IN HERE *) Admitted.
+Proof. intros. inversion H. inversion H1. apply H3. Qed.
 
 (** The [inversion] tactic can also be used to derive goals by showing
     the absurdity of a hypothesis. *)
@@ -482,7 +491,8 @@ Proof.
 Theorem even5_nonsense : 
   ev 5 -> 2 + 2 = 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. inversion H. inversion H1. inversion H3.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (ev_ev__ev) *)
@@ -492,7 +502,13 @@ Proof.
 Theorem ev_ev__ev : forall n m,
   ev (n+m) -> ev n -> ev m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H0. 
+  Case "n is 0".
+    simpl in H. apply H.
+  Case "n is 2 greater than an even number".
+    simpl in H. inversion H. apply IHev in H2. apply H2.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (ev_plus_plus) *)
@@ -500,9 +516,18 @@ Proof.
     induction or even case analysis is needed, but some of the rewriting
     may be tedious. *)
 
+Inductive odd: nat -> Prop := 
+  | odd_1: odd 1
+  | odd_SS: forall n:nat, odd n -> odd (S (S n)).
+
 Theorem ev_plus_plus : forall n m p,
   ev (n+m) -> ev (n+p) -> ev (m+p).
 Proof.
+  (*
+   n must be either even or odd.
+   If n is even, then m and p both must be even, so m+p is even.
+   If n is odd, then m and p both must be odd, so m+p is even.
+   *)
   (* FILL IN HERE *) Admitted.
 (** [] *)
 

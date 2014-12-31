@@ -965,7 +965,19 @@ Theorem bool_fn_applied_thrice :
   forall (f : bool -> bool) (b : bool), 
   f (f (f b)) = f b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. 
+  destruct b.
+  destruct (f true) eqn:ftrue.
+  rewrite -> ftrue. apply ftrue.
+  destruct (f false) eqn:ffalse.
+  apply ftrue. apply ffalse.
+  destruct (f (f false)) eqn:fffalse.
+  destruct (f true) eqn:ftrue.
+  destruct (f false) eqn:ffalse.
+  reflexivity. rewrite <- fffalse. rewrite <- ffalse at 2. reflexivity.
+  destruct (f false) eqn:ffalse.
+  rewrite <- fffalse. rewrite <- ftrue. reflexivity. reflexivity. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars (override_same) *)
@@ -1058,8 +1070,15 @@ Proof.
 Theorem beq_nat_sym : forall (n m : nat),
   beq_nat n m = beq_nat m n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. generalize dependent m.
+  induction n. 
+  Case "n is 0".
+    destruct m. reflexivity. reflexivity.
+  Case "n > 0".
+    destruct m. reflexivity. simpl. apply IHn.
+Qed.  
 (** [] *)
+
 
 (** **** Exercise: 3 stars, advanced, optional (beq_nat_sym_informal) *)
 (** Give an informal proof of this lemma that corresponds to your
@@ -1078,7 +1097,9 @@ Theorem beq_nat_trans : forall n m p,
   beq_nat m p = true ->
   beq_nat n p = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. apply beq_nat_true in H. apply beq_nat_true in H0.
+  rewrite -> H. rewrite -> H0. symmetry. apply beq_nat_refl.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced (split_combine) *)
