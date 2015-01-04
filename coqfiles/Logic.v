@@ -19,8 +19,7 @@ Require Export MoreProp.
     represented using an [Inductive] definition with one
     constructor. *)
 
-Inductive and (P Q : Prop) : Prop :=
-  conj : P -> Q -> (and P Q). 
+Inductive and (P Q : Prop) : Prop := conj : P -> Q -> (and P Q). 
 
 (** Note that, like the definition of [ev] in a previous
     chapter, this definition is parameterized; however, in this case,
@@ -97,13 +96,14 @@ Proof.
 Theorem proj2 : forall P Q : Prop, 
   P /\ Q -> Q.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros P Q H.
+  inversion H as [HP HQ]. 
+  apply HQ.  Qed.
 (** [] *)
 
 Theorem and_commut : forall P Q : Prop, 
   P /\ Q -> Q /\ P.
 Proof.
-  (* WORKED IN CLASS *)
   intros P Q H.
   inversion H as [HP HQ]. 
   split.  
@@ -116,12 +116,16 @@ Proof.
     [inversion] breaks the hypothesis [H : P /\ (Q /\ R)] down into
     [HP: P], [HQ : Q], and [HR : R].  Finish the proof from there: *)
 
+Definition assoc {A: Type} (binop: A -> A -> A): Prop :=
+  forall a b c: A, binop a (binop b c) = binop (binop a b) c.
+
 Theorem and_assoc : forall P Q R : Prop, 
   P /\ (Q /\ R) -> (P /\ Q) /\ R.
 Proof.
   intros P Q R H.
   inversion H as [HP [HQ HR]].
-(* FILL IN HERE *) Admitted.
+  split. split. apply HP. apply HQ. apply HR.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars (even__ev) *)
@@ -161,8 +165,7 @@ Proof.
   intros P Q H. 
   inversion H as [HAB HBA]. apply HAB.  Qed.
 
-Theorem iff_sym : forall P Q : Prop, 
-  (P <-> Q) -> (Q <-> P).
+Theorem iff_sym : forall P Q : Prop, (P <-> Q) -> (Q <-> P).
 Proof.
   (* WORKED IN CLASS *)
   intros P Q H. 
@@ -177,13 +180,17 @@ Proof.
 
 Theorem iff_refl : forall P : Prop, 
   P <-> P.
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof. intros. unfold iff. split. tauto. tauto. Qed.
 
-Theorem iff_trans : forall P Q R : Prop, 
-  (P <-> Q) -> (Q <-> R) -> (P <-> R).
+
+Theorem iff_trans : transitive iff. 
 Proof.
-  (* FILL IN HERE *) Admitted.
+  unfold transitive.
+  intros. inversion H. inversion H0.
+  split. intros. apply H3. apply H1. apply H5.
+  intros. apply H2. apply H4. apply H5.
+Qed.
+
 
 (** Hint: If you have an iff hypothesis in the context, you can use
     [inversion] to break it into two separate implications.  (Think
@@ -274,14 +281,18 @@ Proof.
 Theorem or_distributes_over_and_2 : forall P Q R : Prop,
   (P \/ Q) /\ (P \/ R) -> P \/ (Q /\ R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. inversion H. inversion H0. left. apply H2.
+  inversion H1. left. apply H3. right. split. apply H2. apply H3.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, optional (or_distributes_over_and) *)
 Theorem or_distributes_over_and : forall P Q R : Prop,
   P \/ (Q /\ R) <-> (P \/ Q) /\ (P \/ R).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split. 
+  apply or_distributes_over_and_1. apply or_distributes_over_and_2.
+Qed.
 (** [] *)
 
 (* ################################################### *)
@@ -319,17 +330,21 @@ Proof.
 Theorem andb_false : forall b c,
   andb b c = false -> b = false \/ c = false.
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros. destruct b. simpl in H. right. apply H.
+  left. reflexivity. Qed.
 
 Theorem orb_prop : forall b c,
   orb b c = true -> b = true \/ c = true.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. destruct b. left. reflexivity. simpl in H. right. apply H.
+Qed.
 
 Theorem orb_false_elim : forall b c,
   orb b c = false -> b = false /\ c = false.
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros. split. destruct b. inversion H. reflexivity.
+  destruct b. simpl in H. inversion H. simpl in H. apply H.
+Qed.
 (** [] *)
 
 
@@ -398,7 +413,7 @@ Proof.
     intution is that [True] should be a proposition for which it is
     trivial to give evidence.) *)
 
-(* FILL IN HERE *)
+Inductive True : Prop := i_am_true.
 (** [] *)
 
 (** However, unlike [False], which we'll use extensively, [True] is
@@ -463,14 +478,17 @@ Proof.
 Theorem contrapositive : forall P Q : Prop,
   (P -> Q) -> (~Q -> ~P).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold not. unfold not in H0. intros. apply H in H1.
+  apply H0 in H1. apply H1.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star (not_both_true_and_false) *)
 Theorem not_both_true_and_false : forall P : Prop,
   ~ (P /\ ~P).
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof.
+  intros. unfold not. intros. inversion H. apply H1 in H0. apply H0.
+Qed.
 (** [] *)
 
 (** **** Exercise: 1 star, advanced (informal_not_PNP) *)
@@ -494,8 +512,10 @@ Proof.
 Theorem ev_not_ev_S : forall n,
   ev n -> ~ ev (S n).
 Proof. 
-  unfold not. intros n H. induction H. (* not n! *)
-  (* FILL IN HERE *) Admitted.
+  unfold not. intros n H. induction H. 
+  intros. inversion H. intros. inversion H0.
+  apply IHev in H2. apply H2.
+Qed.
 (** [] *)
 
 (** Note that some theorems that are true in classical logic are _not_
@@ -521,16 +541,11 @@ Proof.
     if we wish to work in classical logic.  Prove that these five
     propositions are equivalent. *)
 
-Definition peirce := forall P Q: Prop, 
-  ((P->Q)->P)->P.
-Definition classic := forall P:Prop, 
-  ~~P -> P.
-Definition excluded_middle := forall P:Prop, 
-  P \/ ~P.
-Definition de_morgan_not_and_not := forall P Q:Prop, 
-  ~(~P /\ ~Q) -> P\/Q.
-Definition implies_to_or := forall P Q:Prop, 
-  (P->Q) -> (~P\/Q). 
+Definition peirce := forall P Q: Prop, ((P->Q)->P)->P.
+Definition classic := forall P:Prop, ~~P -> P.
+Definition excluded_middle := forall P:Prop, P \/ ~P.
+Definition de_morgan_not_and_not := forall P Q:Prop, ~(~P /\ ~Q) -> P\/Q.
+Definition implies_to_or := forall P Q:Prop, (P->Q) -> (~P\/Q). 
 
 (* FILL IN HERE *)
 (** [] *)
@@ -568,6 +583,10 @@ Theorem false_beq_nat : forall n m : nat,
      n <> m ->
      beq_nat n m = false.
 Proof. 
+  intros. unfold not in H. induction n. 
+  destruct m. simpl. apply ex_falso_quodlibet. apply H. reflexivity.
+  simpl. reflexivity. induction m. simpl. reflexivity. simpl.
+  
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
