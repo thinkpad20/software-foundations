@@ -262,10 +262,6 @@ Proof.
     Case "left". right. apply HP.
     Case "right". left. apply HQ.  Qed.
 
-
-
-
-
 Theorem or_distributes_over_and_1 : forall P Q R : Prop,
   P \/ (Q /\ R) -> (P \/ Q) /\ (P \/ R).
 Proof. 
@@ -576,36 +572,90 @@ Proof.
     apply ex_falso_quodlibet.
     apply H. reflexivity.   Qed.
 
-
+Lemma succ_neq : forall n m, n <> m -> S n <> S m.
+Proof. 
+  intros n.
+  induction n. intros. destruct m.
+  unfold not in H. apply ex_falso_quodlibet. apply H. reflexivity.
+  unfold not. intros. inversion H0.
+  intros. destruct m. unfold not. intros. inversion H0.
+  unfold not. intros. inversion H0. unfold not in H.
+  apply H. rewrite H2. reflexivity.
+Qed.
 
 (** **** Exercise: 2 stars (false_beq_nat) *)
 Theorem false_beq_nat : forall n m : nat,
      n <> m ->
      beq_nat n m = false.
 Proof. 
-  intros. unfold not in H. induction n. 
-  destruct m. simpl. apply ex_falso_quodlibet. apply H. reflexivity.
-  simpl. reflexivity. induction m. simpl. reflexivity. simpl.
-  
-  (* FILL IN HERE *) Admitted.
+  intros n m neq. generalize dependent m. induction n. 
+  Case "n = 0". induction m. 
+    SCase "m = 0".
+      unfold not. intros. apply ex_falso_quodlibet. apply neq. reflexivity.
+    SCase "m = S m".
+     intros. simpl. reflexivity.
+  Case "n = S n". destruct m. 
+    SCase "m = 0".
+      simpl. intros. reflexivity.
+    SCase "m = S m".
+      simpl. intros. apply IHn. unfold not. intros. rewrite -> H in neq.
+      unfold not in neq. apply neq. reflexivity.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (beq_nat_false) *)
 Theorem beq_nat_false : forall n m,
   beq_nat n m = false -> n <> m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m neq. generalize dependent m.
+  induction n.
+  Case "n = 0". destruct m.
+    SCase "m = 0". simpl. intros. inversion neq.
+    SCase "m = S m". simpl. unfold not. intros. inversion H.
+  Case "n = S n". destruct m.
+    SCase "m = 0". simpl. unfold not. intros. inversion H.
+    SCase "m = S m". 
+      simpl. unfold not. intros. apply IHn in neq. inversion H. contradiction.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars, optional (ble_nat_false) *)
 Theorem ble_nat_false : forall n m,
   ble_nat n m = false -> ~(n <= m).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n m ble. generalize dependent m.
+  induction n. destruct m. simpl. intros. inversion ble.
+  simpl. intros. inversion ble.
+  destruct m. simpl. intros. unfold not. intros. inversion H.
+  simpl. intros. apply IHn in ble.
+  unfold not. intros contra. inversion contra. unfold not in ble.
+  rewrite H0 in ble. apply ble. apply le_n. unfold not in ble.
+  apply ble. apply Sn_le_Sm__n_le_m. apply contra.
+Qed.  
 (** [] *)
 
+Lemma beq_nat_true_eq: forall n m, n = m -> beq_nat n m = true.
+Proof.
+  intros n. induction n. 
+  intros. rewrite <- H. reflexivity.
+  intros. rewrite -> H. rewrite <- beq_nat_refl. reflexivity.
+Qed.
 
+Definition boolfunc_prop_equiv {A B: Type} 
+  (boolfunc: A -> B -> bool) (prop: A -> B -> Prop) :=
+  forall (x: A) (y: B), (boolfunc x y = true -> prop x y) /\
+                 (boolfunc x y = false -> ~(prop x y)) /\ 
+                 (prop x y -> boolfunc x y = true) /\
+                 (~(prop x y) -> boolfunc x y = false).
 
+Check eq.
+
+Lemma beq_nat_works : boolfunc_prop_equiv beq_nat eq.
+Proof.
+  unfold boolfunc_prop_equiv. intros.
+  split. apply beq_nat_true. split. apply beq_nat_false.
+  split. apply beq_nat_true_eq. apply false_beq_nat.
+Qed.
 
 (* ############################################################ *)
 (** * Existential Quantification *)
@@ -678,7 +728,7 @@ Theorem exists_example_2 : forall n,
 Proof.
   intros n H.
   inversion H as [m Hm]. 
-  exists (2 + m).  
+  exists (2 + m).
   apply Hm.  Qed. 
 
 (** **** Exercise: 1 star, optional (english_exists) *)
@@ -687,7 +737,12 @@ Proof.
 ]] 
     mean? *)
 
-(* FILL IN HERE *)
+(* We have a proposition on numbers that states "the successor of this number is 
+   beautiful". So the proposition states, "there exists a natural number whose
+   successor is beautiful." In fact, let's prove this silly thing. *)
+
+Theorem exists_beautiful_succ: exists n, beautiful (S n).
+Proof. exists 2. apply b_3. Qed.
 
 (** **** Exercise: 1 star (dist_not_exists) *)
 (** Prove that "[P] holds for all [x]" implies "there is no [x] for
@@ -695,8 +750,9 @@ Proof.
 
 Theorem dist_not_exists : forall (X:Type) (P : X -> Prop),
   (forall x, P x) -> ~ (exists x, ~ P x).
-Proof. 
-  (* FILL IN HERE *) Admitted.
+Proof.
+  intros. unfold not. intros. inversion H0. apply H1. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (not_exists_dist) *)
@@ -708,7 +764,12 @@ Theorem not_exists_dist :
   forall (X:Type) (P : X -> Prop),
     ~ (exists x, ~ P x) -> (forall x, P x).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold excluded_middle in H.   
+  unfold not in H. unfold not in H0.
+  destruct H with (P:=P x). apply H1. apply ex_falso_quodlibet.
+  apply H0. exists x. apply H1.
+Qed.
 (** [] *)
 
 (** **** Exercise: 2 stars (dist_exists_or) *)
@@ -718,11 +779,17 @@ Proof.
 Theorem dist_exists_or : forall (X:Type) (P Q : X -> Prop),
   (exists x, P x \/ Q x) <-> (exists x, P x) \/ (exists x, Q x).
 Proof.
-   (* FILL IN HERE *) Admitted.
+  intros. split.
+  Case "->".
+    intros. inversion H. inversion H0.
+    left. exists witness. apply H1.
+    right. exists witness. apply H1.
+  Case "->".
+    intros. inversion H. inversion H0.
+    exists witness. left. apply H1.
+    inversion H0. exists witness. right. apply H1.
+Qed.
 (** [] *)
-
-(* Print dist_exists_or. *)
-
 
 (* ###################################################### *)
 (** * Equality *)
@@ -759,9 +826,10 @@ Notation "x = y" := (eq x y)
    property on [P] that is true of [x] is also true of [y].  *)
 
 Lemma leibniz_equality : forall (X : Type) (x y: X), 
- x = y -> forall P : X -> Prop, P x -> P y.
+  x = y -> forall P : X -> Prop, P x -> P y.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros. inversion H. rewrite <- H2. apply H0.
+Qed.
 (** [] *)
 
 (** We can use
@@ -857,11 +925,11 @@ Here's a simple example illustrating the advantages of the [sumbool] form. *)
 Definition override' {X: Type} (f: nat->X) (k:nat) (x:X) : nat->X:=
   fun (k':nat) => if eq_nat_dec k k' then x else f k'.
 
-Theorem override_same' : forall (X:Type) x1 k1 k2 (f : nat->X),
-  f k1 = x1 -> 
-  (override' f k1 x1) k2 = f k2.
+Theorem override_same' : forall (X:Type) x1 k1 (f : nat->X),
+  f k1 = x1 ->
+  forall k2, (override' f k1 x1) k2 = f k2.
 Proof.
-  intros X x1 k1 k2 f. intros Hx1.
+  intros X x1 k1 f. intros Hx1 k2.
   unfold override'.
   destruct (eq_nat_dec k1 k2).   (* observe what appears as a hypothesis *)
   Case "k1 = k2".
@@ -877,10 +945,13 @@ Proof.
 
 
 (** **** Exercise: 1 star (override_shadow') *)
-Theorem override_shadow' : forall (X:Type) x1 x2 k1 k2 (f : nat->X),
-  (override' (override' f k1 x2) k1 x1) k2 = (override' f k1 x1) k2.
+Theorem override_shadow' : forall (T:Type) out1 out2 in1 in2 (func : nat->T),
+  (override' (override' func in1 out2) in1 out1) in2 = 
+  (override' func in1 out1) in2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. unfold override'. 
+  destruct (eq_nat_dec in1 in2). reflexivity. reflexivity.
+Qed.
 (** [] *)
 
 (* ####################################################### *)
@@ -940,7 +1011,11 @@ Proof.
 Lemma dist_and_or_eq_implies_and : forall P Q R,
        P /\ (Q \/ R) /\ Q = R -> P/\Q.
 Proof.
-(* FILL IN HERE *) Admitted.
+  intros. inversion H. inversion H1. 
+  destruct H2. split. apply H0. apply H2. rewrite -> H3.
+  split. apply H0. apply H2.
+Qed.
+
 (** [] *)
 
 
@@ -954,9 +1029,17 @@ Proof.
     type [X] and a property [P : X -> Prop], such that [all X P l]
     asserts that [P] is true for every element of the list [l]. *)
 
-Inductive all (X : Type) (P : X -> Prop) : list X -> Prop :=
-  (* FILL IN HERE *)
-.
+Inductive all {X : Type} (P : X -> Prop) : list X -> Prop :=
+  | all_nil  : all P []
+  | all_cons : forall l x, P x -> all P l -> all P (x::l).
+
+Remark all_even_stupid: all ev [2; 4; 10].
+Proof.
+  apply all_cons. apply ev_SS. apply ev_0.
+  apply all_cons. apply ev_SS. apply ev_SS. apply ev_0.
+  apply all_cons. apply ev_SS. apply ev_SS. apply ev_SS. apply ev_SS. apply ev_SS. apply ev_0.
+  apply all_nil.
+Qed.
 
 (** Recall the function [forallb], from the exercise
     [forall_exists_challenge] in chapter [Poly]: *)
@@ -974,7 +1057,15 @@ Fixpoint forallb {X : Type} (test : X -> bool) (l : list X) : bool :=
     Are there any important properties of the function [forallb] which
     are not captured by your specification? *)
 
-(* FILL IN HERE *)
+Theorem forallb_works: forall T l test,
+  forallb (X:=T) test l = true -> all (fun x => test x = true) l.
+Proof.
+  intros. induction l.
+  apply all_nil.
+  simpl in H. apply all_cons.
+  apply andb_true_elim1 in H. apply H.
+  apply andb_true_elim2 in H. apply IHl. apply H.
+Qed.
 (** [] *)
 
 (** **** Exercise: 4 stars, advanced (filter_challenge) *)
@@ -1030,19 +1121,56 @@ Inductive appears_in {X:Type} (a:X) : list X -> Prop :=
 Lemma appears_in_app : forall (X:Type) (xs ys : list X) (x:X), 
      appears_in x (xs ++ ys) -> appears_in x xs \/ appears_in x ys.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. 
+  induction xs. 
+    Case "xs empty". right. apply H.
+    Case "xs nonempty".
+      inversion H.
+      SCase "ai_here: x is at the head of xs++ys".
+        left. apply ai_here.
+      SCase "ai_later: x is in the tail of xs++ys".
+        apply IHxs in H1. inversion H1.
+        SSCase "x appears in xs". left. apply ai_later. apply H3.
+        SSCase "x appears in ys". right. apply H3.
+Qed.
+
+Lemma nil_app: forall (X: Type) (l: list X), l ++ [] = l.
+Proof. intros. induction l. reflexivity. simpl. rewrite IHl. reflexivity. Qed.
+
+Lemma nothing_in_empty: forall (X: Type) (x: X), ~(appears_in x []).
+Proof. unfold not. intros. inversion H. Qed.
 
 Lemma app_appears_in : forall (X:Type) (xs ys : list X) (x:X), 
      appears_in x xs \/ appears_in x ys -> appears_in x (xs ++ ys).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction xs.
+  Case "x is empty". destruct ys.
+    SCase "ys is empty". inversion H. simpl. apply H0. rewrite -> nil_app. apply H0.
+    SCase "ys is nonempty". simpl. inversion H. 
+      apply ex_falso_quodlibet. apply nothing_in_empty in H0. apply H0.
+      apply H0.
+  Case "x is nonempty". inversion H.
+    SCase "x is in x0::xs". simpl. inversion H0.
+      SSCase "x is head of xs". apply ai_here.
+      SSCase "x is in tail of xs". apply ai_later. apply IHxs. left. apply H2.
+    SCase "x is in ys". 
+      simpl. apply ai_later. apply IHxs. right. apply H0.
+Qed.
 
 (** Now use [appears_in] to define a proposition [disjoint X l1 l2],
     which should be provable exactly when [l1] and [l2] are
     lists (with elements of type X) that have no elements in common. *)
 
-(* FILL IN HERE *)
+Definition disjoint {T: Type} (l1 l2: list T): Prop :=
+  forall x:T, appears_in x l1 -> ~(appears_in x l2).
 
+Theorem disjoint_sym: forall T, symmetric (disjoint (T:=T)). 
+Proof.
+  unfold symmetric. unfold disjoint. unfold not.
+  intros T l1 l2 H. intros x contains contra.
+  apply H in contra. apply contra. apply contains.
+Qed.
+  
 (** Next, use [appears_in] to define an inductive proposition
     [no_repeats X l], which should be provable exactly when [l] is a
     list (with elements of type [X]) where every member is different
@@ -1050,12 +1178,124 @@ Proof.
     [no_repeats bool []] should be provable, while [no_repeats nat
     [1,2,1]] and [no_repeats bool [true,true]] should not be.  *)
 
-(* FILL IN HERE *)
+Inductive no_repeats {T:Type}: list T -> Prop :=
+  | no_repeats_nil: no_repeats []
+  | no_repeats_cons: forall x l, ~(appears_in x l) -> no_repeats (x::l).
+
+Example not_norepeats_11: ~(no_repeats [1;1]).
+Proof. unfold not. intros. inversion H. apply H1. apply ai_here. Qed.
+
+Inductive monotonic_increase: list nat -> Prop :=
+  | incr_nil: monotonic_increase []
+  | incr_cons: forall l n, 
+      monotonic_increase l -> all (fun m => n <= m) l -> monotonic_increase (n::l).
+
+Definition has_upper_bound (n: nat) (l: list nat): Prop := all (fun m => m <= n) l.
+Definition has_lower_bound (n: nat) (l: list nat): Prop := all (fun m => n <= m) l.
+
+Theorem all_applies: forall (T:Type) (elem:T) (l:list T) (P: T -> Prop), 
+  appears_in elem l -> all P l -> P elem.
+Proof. intros. induction H.
+  inversion H0. apply H2.
+  inversion H0. apply IHappears_in. apply H4.
+Qed.
+
+Theorem all_implication: forall (T: Type) (l: list T) (P1 P2: T -> Prop),
+  (forall x, P1 x -> P2 x) -> all P1 l -> all P2 l.
+Proof.
+  (* Note to self: There's some connection here to category theory... *)
+  intros. induction l.
+  apply all_nil.
+  apply all_cons. inversion H0.
+  apply H in H3. apply H3.
+  inversion H0. apply IHl. apply H4.
+Qed.
+
+Theorem monotonic_is_bounded:
+  forall lowest l,
+  monotonic_increase (lowest::l) -> has_lower_bound lowest l.
+Proof.
+  intros.
+  inversion H.
+  unfold has_lower_bound. apply H3.
+Qed.
+
+Inductive strict_increase: list nat -> Prop :=
+  | si_nil: strict_increase []
+  | si_cons: forall n l, 
+      strict_increase l -> all (fun m => n < m) l -> strict_increase (n::l).
+
+Lemma lt_impl_le: forall n m, n < m -> n <= m.
+Proof.
+  intros. unfold lt in H. apply Sn_le_m_n_le_m in H. apply H.
+Qed.
+
+Theorem strict_increase_implies_monotonic_increase: forall l,
+  strict_increase l -> monotonic_increase l.
+Proof.
+  intros.
+  induction H. apply incr_nil.
+  (* Here we need to show that any n is <= any element of l. *)
+  assert (n_le: all (fun x => n <= x) l).
+    destruct l. apply all_nil.
+    apply all_cons. inversion H0.
+    apply lt_impl_le. apply H3.
+Admitted.
 
 (** Finally, state and prove one or more interesting theorems relating
     [disjoint], [no_repeats] and [++] (list append).  *)
 
-(* FILL IN HERE *)
+Lemma lt_trans: forall a b c, a < b -> b < c -> a < c.
+Proof.
+  unfold lt. intros. apply Sn_le_m_n_le_m in H0.
+  apply le_trans with (a:=S a) (b:=b). apply H. apply H0.
+Qed.
+
+Lemma Sn_neq_n: forall n, ~(S n = n).
+Proof. unfold not. intros. induction n. inversion H. 
+  inversion H. apply IHn. apply H1. Qed.
+
+Lemma Sn_not_le_n: forall n, ~(S n <= n).
+Proof. unfold not. intros. induction n.
+  inversion H.
+  apply Sn_le_Sm__n_le_m in H. apply IHn. apply H.
+Qed.
+
+Lemma ordered_naturals: forall n m, n < m -> ~(m <= n).
+Proof. 
+  intros n. unfold not. induction n.
+  intros. destruct m. inversion H. 
+  inversion H. rewrite <- H2 in H0. apply Sn_not_le_n in H0. apply H0.
+  inversion H0.
+  intros. inversion H. rewrite <- H1 in H0. apply Sn_le_Sm__n_le_m in H0.
+  rewrite <- H1 in H. apply Sn_not_le_n in H0. apply H0.
+  rewrite <- H2 in H0. apply Sn_le_Sm__n_le_m in H0.
+  assert (S n <= n).
+    apply Sn_le_m_n_le_m.
+    apply le_trans with (a:= S(S n)) (b:=m0) (c:=n). apply H1. apply H0.
+  apply Sn_not_le_n in H3. apply H3.
+Qed.
+
+Theorem disjoint_bounds: forall n m l1 l2, 
+   has_upper_bound n l1 -> has_lower_bound m l2 -> n < m -> disjoint l1 l2.
+Proof.
+   intros n m l1 l2 bounded_up bounded_down n_lt_m.
+   unfold disjoint. intros elem isinl1.
+   (* because elem is in l1, we know that it must be <= n. *)
+   assert (elem <= n). 
+     apply all_applies with (P := fun e => le e n) (l:=l1). 
+     apply isinl1. apply bounded_up.
+   assert (elem_lt_m: elem < m). 
+     inversion H. apply n_lt_m. apply lt_trans with (b:=n).
+     rewrite <- H1. unfold lt. apply n_le_m__Sn_le_Sm. apply H0. apply n_lt_m.
+   unfold not. intros contra.
+   (* If elem appears in l2, then m <= elem. *)
+   assert (m_le_elem: m <= elem).
+     apply all_applies with (P := le m) (l:=l2). apply contra. apply bounded_down.
+  (* But we earlier proved elem < m, so we have a contradiction. *)
+  apply ordered_naturals in elem_lt_m. apply elem_lt_m. apply m_le_elem.
+Qed.
+
 (** [] *)
 
 

@@ -107,8 +107,27 @@ Inductive empty_relation: nat -> nat -> Prop := .
 
 Definition relation (T: Type): Type := T -> T -> Prop.
 
+Definition reflexive {T: Type} (R: relation T): Prop :=
+  forall a: T, R a a.
+
+Definition symmetric {T: Type} (R: relation T): Prop :=
+  forall a b: T, R a b -> R b a.
+
 Definition transitive {T: Type} (R: relation T): Prop :=
   forall a b c: T, R a b -> R b c -> R a c.
+
+Definition antisymmetric {T: Type} (R: relation T): Prop :=
+  forall a b: T, R a b -> ~(R b a).
+
+Definition total_rel {T: Type} (R: relation T): Prop :=
+  forall a b: T, R a b \/ R b a.
+
+Definition preorder {T: Type} (R: relation T): Prop :=
+  reflexive R /\ transitive R.
+
+Definition partial_order {T: Type} (R: relation T): Prop :=
+  preorder R /\ antisymmetric R.
+
 
 Lemma le_trans : transitive le.
 Proof.
