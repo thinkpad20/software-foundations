@@ -2,6 +2,7 @@
 
 Require Export MoreProp. 
 
+
 (** Coq's built-in logic is very small: the only primitives are
     [Inductive] definitions, universal quantification ([forall]), and
     implication ([->]), while all the other familiar logical
@@ -1093,6 +1094,15 @@ Qed.
     for one list to be a merge of two others.  Do this with an
     inductive relation, not a [Fixpoint].)  *)
 
+Inductive inorder_merge {T: Type}: list T -> list T -> list T -> Prop :=
+  | iom_nil_l: forall l, inorder_merge l [] l
+  | iom_nil_r: forall l, inorder_merge [] l l
+  | iom_cons: forall x y l1 l2 l, inorder_merge l1 l2 l -> 
+                                  inorder_merge (x::l1) (y::l2) (x::y::l).
+
+Example iom_1: inorder_merge [1;6;3] [4;2] [1;4;6;2;3].
+Proof. apply iom_cons. apply iom_cons. apply iom_nil_l. Qed.
+
 (* FILL IN HERE *)
 (** [] *)
 
@@ -1313,8 +1323,25 @@ Qed.
     does not stutter.) *)
 
 Inductive nostutter:  list nat -> Prop :=
- (* FILL IN HERE *)
-.
+  | nostutter_nil: nostutter []
+  | nostutter_single: forall n, nostutter [n]
+  | nostutter_multi: forall n m l, 
+      n <> m -> nostutter l -> 
+      hd_opt l <> Some m -> 
+      nostutter (n::m::l).
+
+Example nostutter_141: nostutter [1;4;1].
+Proof.
+  apply nostutter_multi. unfold not. intros. inversion H.
+  apply nostutter_single. simpl. unfold not. intros contra.
+  inversion contra.
+Qed.
+
+Example not_nostutter_114: ~(nostutter [1;1;4]).
+Proof. 
+  unfold not. intros contra. inversion contra. 
+  unfold not in H2. apply H2. reflexivity.
+Qed.
 
 (** Make sure each of these tests succeeds, but you are free
     to change the proof if the given one doesn't work for you.
@@ -1329,25 +1356,36 @@ Inductive nostutter:  list nat -> Prop :=
     tactics.  *)
 
 Example test_nostutter_1:      nostutter [3;1;4;1;5;6].
-(* FILL IN HERE *) Admitted.
+  apply nostutter_multi. unfold not; intros noteq; inversion noteq.
+  apply nostutter_multi. unfold not; intros noteq; inversion noteq.
+  apply nostutter_multi. unfold not; intros noteq; inversion noteq.
+  apply nostutter_nil. unfold not; intros noteq; inversion noteq.
+  unfold not; intros noteq; inversion noteq.
+  unfold not; intros noteq; inversion noteq.
+Qed.
+
 (* 
   Proof. repeat constructor; apply beq_nat_false; auto. Qed.
 *)
 
 Example test_nostutter_2:  nostutter [].
-(* FILL IN HERE *) Admitted.
+Proof. apply nostutter_nil. Qed.
+
 (* 
   Proof. repeat constructor; apply beq_nat_false; auto. Qed.
 *)
 
 Example test_nostutter_3:  nostutter [5].
-(* FILL IN HERE *) Admitted.
+Proof. apply nostutter_single. Qed.
 (* 
   Proof. repeat constructor; apply beq_nat_false; auto. Qed.
 *)
 
 Example test_nostutter_4:      not (nostutter [3;1;1;4]).
-(* FILL IN HERE *) Admitted.
+Proof. unfold not. intros contra. inversion contra.
+  simpl in H4. unfold not in H4. apply H4. reflexivity.
+Qed.  
+
 (* 
   Proof. intro.
   repeat match goal with 
@@ -1370,21 +1408,30 @@ Example test_nostutter_4:      not (nostutter [3;1;1;4]).
 Lemma app_length : forall (X:Type) (l1 l2 : list X),
   length (l1 ++ l2) = length l1 + length l2. 
 Proof. 
-  (* FILL IN HERE *) Admitted.
+  intros. induction l1. reflexivity.
+  simpl. rewrite IHl1. reflexivity.
+Qed.
 
 Lemma appears_in_app_split : forall (X:Type) (x:X) (l:list X),
   appears_in x l -> 
   exists l1, exists l2, l = l1 ++ (x::l2).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. induction l.
+  inversion H.
+  inversion H.
+  exists []. simpl. exists l. reflexivity.
+  apply IHl in H1.  
+Admitted.  
+
 
 (** Now define a predicate [repeats] (analogous to [no_repeats] in the
    exercise above), such that [repeats X l] asserts that [l] contains
    at least one repeated element (of type [X]).  *)
 
 Inductive repeats {X:Type} : list X -> Prop :=
-  (* FILL IN HERE *)
-.
+  | repeats_head: forall x l, repeats (x::x::l)
+  | repeats_inside: forall x l, repeats l -> repeats (x::l).
+
 
 (** Now here's a way to formalize the pigeonhole principle. List [l2]
    represents a list of pigeonhole labels, and list [l1] represents an
@@ -1398,6 +1445,10 @@ Theorem pigeonhole_principle: forall (X:Type) (l1 l2:list X),
   length l2 < length l1 -> 
   repeats l1.  
 Proof.  intros X l1. induction l1.
+  intros l2 excl_mid appears contra.
+  simpl in contra. inversion contra.
+  intros l2 excl_mid appears smaller.
+  
   (* FILL IN HERE *) Admitted.
 (** [] *)
 

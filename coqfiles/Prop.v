@@ -619,6 +619,21 @@ Proof.
 
 (** [] *)
 
+Lemma S_rewrite: forall n m, S (n + S m) = S (S (n + m)).
+Proof. 
+  intros. induction n. reflexivity.
+  simpl. rewrite IHn. reflexivity.
+Qed.
+
+Theorem double_ev: forall n, ev (2 * n).
+Proof.
+  intros. induction n. simpl. constructor.
+  inversion IHn. rewrite plus_0_r in H0.
+  assert (n_0: n = 0). destruct n. reflexivity. inversion H0.
+  rewrite n_0. simpl. constructor. constructor.
+  simpl. rewrite plus_0_r. rewrite plus_0_r in H. 
+  rewrite S_rewrite. apply ev_SS. rewrite <- H. apply ev_SS. apply H0.
+Qed.
 
 (* $Date: 2013-07-01 18:48:47 -0400 (Mon, 01 Jul 2013) $ *)
 

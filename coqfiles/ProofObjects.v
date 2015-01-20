@@ -1,5 +1,6 @@
 (** * ProofObjects: Working with Explicit Evidence in Coq *)
 
+Require Import String.
 Require Export Logic.
 
 (* ##################################################### *)
@@ -100,8 +101,7 @@ Check (b_sum 3 5 b_3 b_5).
     as a primitive "evidence constructor" that, when applied to two
     particular numbers, wants to be further applied to evidence that
     those two numbers are beautiful; its type, 
-[[  
-    forall n m, beautiful n -> beautiful m -> beautiful (n+m),
+    [forall n m, beautiful n -> beautiful m -> beautiful (n+m)],
     expresses this functionality, in the same way that the polymorphic
     type [forall X, list X] in the previous chapter expressed the fact
     that the constructor [nil] can be thought of as a function from
@@ -183,10 +183,12 @@ Print eight_is_beautiful'''.
 Theorem six_is_beautiful :
   beautiful 6.
 Proof.
-  (* FILL IN HERE *) Admitted.
+   apply b_sum with (n:=3) (m:=3).
+   apply b_3.
+   apply b_3.
+Qed.
 
-Definition six_is_beautiful' : beautiful 6 :=
-  (* FILL IN HERE *) admit.
+Definition six_is_beautiful' : beautiful 6 := b_sum 3 3 b_3 b_3.
 (** [] *)
 
 (** **** Exercise: 1 star (nine_is_beautiful) *)
@@ -195,10 +197,13 @@ Definition six_is_beautiful' : beautiful 6 :=
 Theorem nine_is_beautiful :
   beautiful 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+   apply b_sum with (n:=3) (m:=6).
+   apply b_3.
+   apply six_is_beautiful.
+Qed.
 
-Definition nine_is_beautiful' : beautiful 9 :=
-  (* FILL IN HERE *) admit.
+
+Definition nine_is_beautiful' : beautiful 9 := b_sum 3 6 b_3 (six_is_beautiful).
 (** [] *)
 
 
